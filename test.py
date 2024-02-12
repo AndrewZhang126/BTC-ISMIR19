@@ -94,8 +94,31 @@ for i, audio_path in enumerate(audio_paths):
             f.write(line)
 
     logger.info("label file saved : %s" % save_path)
+    # print(save_path)
+    # ref_filename = os.path.split(save_path)[-1]
+    # ref_filefolder = os.path.split(os.path.split(save_path)[0])[-1]
+    # # print(ref_filename)
+    # # print(ref_filefolder)
+    # print('./input_data/' + ref_filefolder + '/Labels/' + ref_filename)
+    # # lab file to midi file
+    # (ref_intervals, ref_labels) = mir_eval.io.load_labeled_intervals('./input_data/' + ref_filefolder + '/Labels/' + ref_filename)
+    # (est_intervals, est_labels) = mir_eval.io.load_labeled_intervals(save_path)
 
-    # lab file to midi file
+    # est_intervals, est_labels = mir_eval.util.adjust_intervals(est_intervals, 
+    #                                                            est_labels, 
+    #                                                            ref_intervals.min(),
+    #                                                            ref_intervals.max(), 
+    #                                                            mir_eval.chord.NO_CHORD,
+    #                                                            mir_eval.chord.NO_CHORD)
+    
+    # (intervals, ef_labels, est_labels) = mir_eval.util.merge_labeled_intervals(ref_intervals, 
+    #                                                                            ref_labels, 
+    #                                                                            est_intervals, 
+    #                                                                            est_labels)
+    # durations = mir_eval.util.intervals_to_durations(intervals)
+    # comparisons = mir_eval.chord.root(ref_labels, est_labels)
+    # score = mir_eval.chord.weighted_accuracy(comparisons, durations)
+    # print(score)
     
 
     starts, ends, pitchs = list(), list(), list()
@@ -127,4 +150,6 @@ for i, audio_path in enumerate(audio_paths):
 
     midi.instruments.append(instrument)
     midi.write(save_path.replace('.lab', '.midi'))    
+
+
 
