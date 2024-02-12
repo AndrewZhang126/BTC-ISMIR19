@@ -10,7 +10,7 @@ mirex_score = []
 
 artists = ["Beatles", "Queen", "USPop"]
 for artist in artists:
-    path = "./BTC-ISMIR19/output_data/" + artist
+    path = "./output_data/" + artist
     curr_root = 0
     curr_majmin = 0
     curr_mirex = 0
