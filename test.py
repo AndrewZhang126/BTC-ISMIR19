@@ -94,13 +94,20 @@ for i, audio_path in enumerate(audio_paths):
             f.write(line)
 
     logger.info("label file saved : %s" % save_path)
-    # print(save_path)
-    # ref_filename = os.path.split(save_path)[-1]
-    # ref_filefolder = os.path.split(os.path.split(save_path)[0])[-1]
-    # # print(ref_filename)
-    # # print(ref_filefolder)
-    # print('./input_data/' + ref_filefolder + '/Labels/' + ref_filename)
-    # # lab file to midi file
+
+    ref_filename = os.path.split(save_path)[-1]
+    ref_filefolder = os.path.split(os.path.split(save_path)[0])[-1]
+    results_path = save_path.replace('.lab', '_Score.txt')
+
+    (ref_intervals, ref_labels) = mir_eval.io.load_labeled_intervals('./input_data/' + ref_filefolder + '/Labels/' + ref_filename)
+    (est_intervals, est_labels) = mir_eval.io.load_labeled_intervals(save_path)
+    scores = mir_eval.chord.evaluate(ref_intervals, ref_labels,
+                                     est_intervals, est_labels)
+    
+    with open(results_path, 'w') as f:
+        for score in scores:
+            f.write(score + ": " + str(scores[score]) + "\n")
+    
     # (ref_intervals, ref_labels) = mir_eval.io.load_labeled_intervals('./input_data/' + ref_filefolder + '/Labels/' + ref_filename)
     # (est_intervals, est_labels) = mir_eval.io.load_labeled_intervals(save_path)
 
@@ -119,8 +126,8 @@ for i, audio_path in enumerate(audio_paths):
     # comparisons = mir_eval.chord.root(ref_labels, est_labels)
     # score = mir_eval.chord.weighted_accuracy(comparisons, durations)
     # print(score)
-    
 
+    # lab file to midi file
     starts, ends, pitchs = list(), list(), list()
 
     intervals, chords = mir_eval.io.load_labeled_intervals(save_path)
