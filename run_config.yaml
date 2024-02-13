@@ -14,7 +14,7 @@ experiment:
   learning_rate : 0.0001
   weight_decay : 0.0
   max_epoch : 100
-  batch_size : 128
+  batch_size : 1
   save_step : 40
   data_ratio : 0.8
 
@@ -39,5 +39,5 @@ model:
 path:
   ckpt_path : 'model'
   result_path : 'result'
-  asset_path : '/data/music/chord_recognition/jayg996/assets'
-  root_path : '/data/music/chord_recognition'
+  asset_path : 'input_data/'
+  root_path : 'input_data/'

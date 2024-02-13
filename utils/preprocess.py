@@ -6,6 +6,7 @@ from enum import Enum
 import pyrubberband as pyrb
 import torch
 import math
+import pdb
 
 class FeatureTypes(Enum):
     cqt = 'cqt'
@@ -22,6 +23,11 @@ class Preprocess():
 
         # isophonic
         self.isophonic_directory = self.root_path + 'isophonic/'
+
+        # beatles
+        self.beatles_directory = self.root_path + 'Beatles/'
+        self.beatles_audio_path = 'Audio/'
+        self.beatles_lab_path = 'Labels/'
 
         # uspop
         self.uspop_directory = self.root_path + 'uspop/'
@@ -73,6 +79,19 @@ class Preprocess():
                             mp3_path = self.find_mp3_path(dirpath, song_name)
                             res_list.append([song_name, os.path.join(dirpath, filename), os.path.join(dirpath, mp3_path),
                                              os.path.join(self.root_path, "result", "isophonic")])
+
+        # Beatles
+        if "Beatles" in self.dataset_names:
+            for filename in os.listdir(os.path.join(self.beatles_directory, self.beatles_lab_path)):
+                if ".lab" in filename:
+                        tmp = filename.replace(".lab", "")
+                        song_name = " ".join(re.findall("[a-zA-Z]+", tmp)).replace("CD", "")
+                        mp3_path = self.find_mp3_path(os.path.join(self.beatles_directory, self.beatles_audio_path), song_name)
+                        res_list.append([song_name, os.path.join(self.beatles_directory, self.beatles_lab_path, filename),
+                                             os.path.join(self.beatles_directory, self.beatles_audio_path, mp3_path),
+                                             os.path.join(self.root_path, "result", "Beatles")])
+
+
 
         # uspop
         if "uspop" in self.dataset_names:
@@ -140,6 +159,7 @@ class Preprocess():
         return mp3_config, feature_config, mp3_string, feature_string
 
     def generate_labels_features_new(self, all_list):
+
         pid = os.getpid()
         mp3_config, feature_config, mp3_str, feature_str = self.config_to_folder()
 

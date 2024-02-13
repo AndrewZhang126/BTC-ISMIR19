@@ -6,10 +6,11 @@ from utils.preprocess import Preprocess, FeatureTypes
 import math
 from multiprocessing import Pool
 from sortedcontainers import SortedList
+import pdb
 
 class AudioDataset(Dataset):
     def __init__(self, config, root_dir='/data/music/chord_recognition', dataset_names=('isophonic',),
-                 featuretype=FeatureTypes.cqt, num_workers=20, train=False, preprocessing=False, resize=None, kfold=4):
+                 featuretype=FeatureTypes.cqt, num_workers=1, train=False, preprocessing=False, resize=None, kfold=4):
         super(AudioDataset, self).__init__()
 
         self.config = config
@@ -30,6 +31,7 @@ class AudioDataset(Dataset):
         self.feature_string = "%s_%d_%d_%d" % \
                               (featuretype.value, feature_config['n_bins'], feature_config['bins_per_octave'], feature_config['hop_length'])
 
+        # breakpoint()
         if feature_config['large_voca'] == True:
             # store paths if exists
             is_preprocessed = True if os.path.exists(os.path.join(root_dir, 'result', dataset_names[0]+'_voca', self.mp3_string, self.feature_string)) else False
@@ -88,8 +90,12 @@ class AudioDataset(Dataset):
         temp = {}
         used_song_names = list()
         for name in self.dataset_names:
-            dataset_path = os.path.join(self.root_dir, "result", name, self.mp3_string, self.feature_string)
+            # dataset_path = os.path.join(self.root_dir, "result", name, self.mp3_string, self.feature_string)
+            print(os.getcwd())
+            print(os.path.join(os.getcwd(), self.root_dir, name))
+            dataset_path = os.path.join(os.getcwd(), self.root_dir, name)
             song_names = os.listdir(dataset_path)
+            song_names.remove(".DS_Store")
             for song_name in song_names:
                 paths = []
                 instance_names = os.listdir(os.path.join(dataset_path, song_name))
@@ -142,7 +148,9 @@ class AudioDataset(Dataset):
         temp = {}
         used_song_names = list()
         for name in self.dataset_names:
-            dataset_path = os.path.join(self.root_dir, "result", name+'_voca', self.mp3_string, self.feature_string)
+            # dataset_path = os.path.join(self.root_dir, "result", name+'_voca', self.mp3_string, self.feature_string)
+            print(os.getcwd())
+            dataset_path = os.path.join(os.getcwd(), self.root_dir, name)
             song_names = os.listdir(dataset_path)
             for song_name in song_names:
                 paths = []
