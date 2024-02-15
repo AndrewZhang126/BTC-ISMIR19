@@ -55,6 +55,7 @@ class AudioDataset(Dataset):
         else:
             # store paths if exists
             is_preprocessed = True if os.path.exists(os.path.join(root_dir, 'result', dataset_names[0], self.mp3_string, self.feature_string)) else False
+            print("is_preprocessed:", is_preprocessed)
             if (not is_preprocessed) | preprocessing:
                 midi_paths = self.preprocessor.get_all_files()
 
@@ -69,16 +70,22 @@ class AudioDataset(Dataset):
 
                     p.close()
                 else:
+                    # breakpoint()
+                    print(midi_paths)
                     self.preprocessor.generate_labels_features_new(midi_paths)
 
             # kfold is 5 fold index ( 0, 1, 2, 3, 4 )
             self.song_names, self.paths = self.get_paths(kfold=kfold)
+            print(self.song_names)
 
     def __len__(self):
         return len(self.paths)
 
     def __getitem__(self, idx):
         instance_path = self.paths[idx]
+
+        breakpoint()
+        print(instance_path)
 
         res = dict()
         data = torch.load(instance_path)
@@ -142,6 +149,8 @@ class AudioDataset(Dataset):
                 instances = [inst for inst in instances if "1.00_0" in inst]
                 result += instances
             song_names = song_names[fold_num[kfold]:fold_num[kfold+1]]
+            if '.DS_Store' in result:
+                result.remove('.DS_Store')
         return song_names, result
 
     def get_paths_voca(self, kfold=4):

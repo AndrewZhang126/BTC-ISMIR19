@@ -188,6 +188,7 @@ class Preprocess():
             # make result path if not exists
             # save_path, mp3_string, feature_string, song_name, aug.pt
             result_path = os.path.join(save_path, mp3_str, feature_str, song_name.strip())
+            print("RESULT PATH:", result_path)
             if not os.path.exists(result_path):
                 os.makedirs(result_path)
 
@@ -210,23 +211,26 @@ class Preprocess():
                     audio_length = x.shape[0]
                     chord_info['start'] = chord_info['start'] * 1/stretch_factor
                     chord_info['end'] = chord_info['end'] * 1/stretch_factor
+                    
 
                     last_sec = chord_info.iloc[-1]['end']
                     last_sec_hz = int(last_sec * mp3_config['song_hz'])
 
-                    if audio_length + mp3_config['skip_interval'] < last_sec_hz:
+                    # sus
+                    if audio_length + mp3_config['skip_interval']*mp3_config['song_hz'] < last_sec_hz:
                         print('loaded song is too short :', song_name)
                         loop_broken = True
                         j += 1
                         break
                     elif audio_length > last_sec_hz:
+                    # if audio_length > last_sec_hz:
                         x = x[:last_sec_hz]
 
                     origin_length = last_sec_hz
                     origin_length_in_sec = origin_length / mp3_config['song_hz']
 
                     current_start_second = 0
-
+ 
                     # get chord list between current_start_second and current+song_length
                     while current_start_second + mp3_config['inst_len'] < origin_length_in_sec:
                         inst_start_sec = current_start_second
@@ -254,7 +258,7 @@ class Preprocess():
                                     available_chords['min_end'] = min_ends
                                     chords_lengths = available_chords['min_end'] - available_chords['max_start']
                                     available_chords['chord_length'] = chords_lengths
-                                    chord = available_chords.ix[available_chords['chord_length'].idxmax()]['chord_id']
+                                    chord = available_chords.loc[available_chords['chord_length'].idxmax()]['chord_id']
                                 else:
                                     chord = 24
                             except Exception as e:
@@ -293,6 +297,8 @@ class Preprocess():
                                 else:
                                     raise NotImplementedError
 
+                                # breakpoint()
+                                # print(feature)
                                 if feature.shape[1] > self.no_of_chord_datapoints_per_sequence:
                                     feature = feature[:, :self.no_of_chord_datapoints_per_sequence]
 
