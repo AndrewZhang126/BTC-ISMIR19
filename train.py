@@ -80,6 +80,9 @@ if __name__ == '__main__':
     # Make asset directory
     if not os.path.exists(os.path.join(asset_path, ckpt_path)):
         os.makedirs(os.path.join(asset_path, ckpt_path))
+
+    if not os.path.exists(os.path.join(asset_path, result_path)):
+        # os.makedirs(os.path.join(asset_path, ckpt_path))
         os.makedirs(os.path.join(asset_path, result_path))
 
     # Load model
@@ -110,7 +113,7 @@ if __name__ == '__main__':
         mean = 0
         square_mean = 0
         k = 0
-        for i, data in enumerate(train_dataloader):
+        for data in train_dataloader:
             features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
             features = features.to(device)
             mean += torch.mean(features).item()

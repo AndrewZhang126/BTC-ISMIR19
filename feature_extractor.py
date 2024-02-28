@@ -16,10 +16,9 @@ from torch import optim
 # 
 config = HParams.load("run_config.yaml")
 
-audio_path = 'input_data/Beatles/Audio/Lovely Rita.mp3'
+audio_path = 'input_data/Beatles/Audio/Because.mp3'
 feature, feature_per_second, song_length_second = audio_file_to_features(audio_path, config)
 
 train_dataset1 = AudioDataset(config, root_dir=config.path['root_path'], dataset_names=("Beatles",), num_workers=20, preprocessing=False, train=True, kfold=1)
-
 
 print(feature.shape, feature_per_second, song_length_second)
