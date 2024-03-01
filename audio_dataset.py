@@ -84,8 +84,8 @@ class AudioDataset(Dataset):
     def __getitem__(self, idx):
         instance_path = self.paths[idx]
 
-        breakpoint()
-        print(instance_path)
+        # breakpoint()
+        print("Loading path:", instance_path)
 
         res = dict()
         data = torch.load(instance_path)
@@ -97,12 +97,15 @@ class AudioDataset(Dataset):
         temp = {}
         used_song_names = list()
         for name in self.dataset_names:
-            # dataset_path = os.path.join(self.root_dir, "result", name, self.mp3_string, self.feature_string)
-            print(os.getcwd())
-            print(os.path.join(os.getcwd(), self.root_dir, name))
-            dataset_path = os.path.join(os.getcwd(), self.root_dir, name)
+
+            # Open folder of generated features
+            dataset_path = os.path.join(self.root_dir, "result", name, self.mp3_string, self.feature_string)
             song_names = os.listdir(dataset_path)
-            song_names.remove(".DS_Store")
+
+            # Remove ds store files
+            if ".DS_Store" in song_names:
+                song_names.remove(".DS_Store")
+
             for song_name in song_names:
                 paths = []
                 instance_names = os.listdir(os.path.join(dataset_path, song_name))
@@ -157,9 +160,9 @@ class AudioDataset(Dataset):
         temp = {}
         used_song_names = list()
         for name in self.dataset_names:
-            # dataset_path = os.path.join(self.root_dir, "result", name+'_voca', self.mp3_string, self.feature_string)
+            dataset_path = os.path.join(self.root_dir, "result", name+'_voca', self.mp3_string, self.feature_string)
             print(os.getcwd())
-            dataset_path = os.path.join(os.getcwd(), self.root_dir, name)
+            # dataset_path = os.path.join(os.getcwd(), self.root_dir, name)
             song_names = os.listdir(dataset_path)
             for song_name in song_names:
                 paths = []
