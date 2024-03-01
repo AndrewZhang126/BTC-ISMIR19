@@ -125,7 +125,7 @@ class bi_directional_self_attention_layers(nn.Module):
         # Project to hidden size
         x = self.embedding_proj(x)
 
-        # Add timing signal
+        # Add timing signal, length defined in run_config.yaml
         x += self.timing_signal[:, :inputs.shape[1], :].type_as(inputs.data)
 
         # A Stack of Bi-directional Self-attention Layers

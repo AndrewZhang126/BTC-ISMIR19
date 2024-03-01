@@ -85,7 +85,7 @@ class AudioDataset(Dataset):
         instance_path = self.paths[idx]
 
         # breakpoint()
-        print("Loading path:", instance_path)
+        # print("Loading path:", instance_path)
 
         res = dict()
         data = torch.load(instance_path)

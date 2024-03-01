@@ -141,7 +141,6 @@ if __name__ == '__main__':
         second_correct = 0.
         for i, data in enumerate(train_dataloader):
             features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
-            print(data)
             features, chords = features.to(device), chords.to(device)
 
             features.requires_grad = True
