@@ -2,47 +2,44 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os, glob
 
-N = 3
+# number of scores
+N = 9
 
-root_score = []
-majmin_score = []
-mirex_score = []
+score_map = {'root': [], 'majmin': [], 'majmin_inv': [], 'thirds': [], 'triads': [], 
+                 'tetrads': [], 'sevenths': [], 'sevenths_inv': [], 'mirex': []}
 
 artists = ["Beatles", "Queen", "USPop"]
 for artist in artists:
     path = "./output_data/" + artist
-    curr_root = 0
-    curr_majmin = 0
-    curr_mirex = 0
+    curr_vals = {'root': 0, 'majmin': 0, 'majmin_inv': 0, 'thirds': 0, 'triads': 0, 
+                 'tetrads': 0, 'sevenths': 0, 'sevenths_inv': 0, 'mirex': 0}
+
     num_entries = 0
     for filename in os.listdir(path):
         if filename.endswith(".txt"):
             with open(os.path.join(path, filename), 'r') as f:
                 for line in f:
                     key, val = line.split(":")[0], float(line.split(":")[-1])
-                    if key == 'root':
-                        curr_root += val
-                    elif key == 'majmin':
-                        curr_majmin += val
-                    elif key == 'mirex':
-                        curr_mirex += val
+                    if key in curr_vals:
+                        curr_vals[key] += val
             num_entries += 1
-    root_score.append(curr_root / num_entries)
-    majmin_score.append(curr_majmin / num_entries)
-    mirex_score.append(curr_mirex / num_entries)
+    for x in curr_vals:
+        score_map[x].append(curr_vals[x] / num_entries)
 
-print(root_score)
-print(majmin_score)
-print(mirex_score)
+print(score_map)
 
+indices = np.arange(0, 2 * N, step=2)
+width = 0.5
+colors = ['tab:blue', 'tab:orange', 'darkseagreen']
 
-indices = np.arange(N)
-width = 0.3
+tick = 0
+for i in range(len(artists)):
+    vals = []
+    for score in score_map:
+        vals.append(score_map[score][i])
+    plt.bar(indices + tick * width, vals, width, label=artists[i], color=colors[i])
+    tick += 1
 
-plt.bar(indices, root_score, width, label='Root Score', color='tab:blue')
-plt.bar(indices + width, majmin_score, width, label='Maj-Min Score', color='tab:orange')
-plt.bar(indices + 2 * width, mirex_score, width, label='MIREX Score', color='darkseagreen')
-
-plt.xticks(indices + 3 * width / 3, artists)
-plt.legend(loc="best")
+plt.xticks(indices + 9 * width / 9, score_map.keys(), fontsize=6)
+plt.legend(loc="lower center", ncol = 3, bbox_to_anchor=(0.5, 1))
 plt.savefig("score_plot.png")
