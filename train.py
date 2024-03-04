@@ -141,7 +141,7 @@ if __name__ == '__main__':
         second_correct = 0.
         for i, data in enumerate(train_dataloader):
             print(type(data))
-            breakpoint()
+            # breakpoint()
             features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
             features, chords = features.to(device), chords.to(device)
 
@@ -181,7 +181,7 @@ if __name__ == '__main__':
             validation_loss = 0
             n = 0
             for i, data in enumerate(valid_dataloader):
-                val_features, val_input_percentages, val_chords, val_collapsed_chords, val_chord_lens, val_boundaries = data
+                val_features, val_aug_features, val_input_percentages, val_chords, val_collapsed_chords, val_chord_lens, val_boundaries = data
                 val_features, val_chords = val_features.to(device), val_chords.to(device)
 
                 val_features = (val_features - mean) / std

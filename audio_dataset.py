@@ -253,7 +253,7 @@ def _collate_fn(batch):
     collapsed_chords = torch.tensor(collapsed_chords, dtype=torch.int64)  # total_unique_chord_len
     boundaries = torch.tensor(boundaries, dtype=torch.uint8)  # (batch_size*time_length)
 
-    return features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries
+    return features, aug_feature, input_percentages, chords, collapsed_chords, chord_lens, boundaries
 
 class AudioDataLoader(DataLoader):
     def __init__(self, *args, **kwargs):
