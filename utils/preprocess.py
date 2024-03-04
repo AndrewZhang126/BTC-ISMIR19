@@ -183,9 +183,15 @@ class Preprocess():
                 print(i, ' th song')
 
             original_wav, sr = librosa.load(os.path.join(mp3_path), sr=mp3_config['song_hz'])
+            # augmented_wav = original_wav 
             augmented_wav = self.augment_audio(os.path.join(mp3_path))
 
+            # Generate original song features
             i_, j_, k_, total_ = self.generate_song_label_features(song_name, lab_path, mp3_path, save_path, original_wav, sr)
+            
+            # Generate augmented song features
+            self.generate_song_label_features(song_name, lab_path, mp3_path, save_path+"_aug", augmented_wav, sr)
+            
             i+=i_
             j+=j_
             k+=k_

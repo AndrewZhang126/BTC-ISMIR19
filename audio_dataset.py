@@ -84,18 +84,29 @@ class AudioDataset(Dataset):
     def __getitem__(self, idx):
         instance_path = self.paths[idx]
 
-        # breakpoint()
-        # print("Loading path:", instance_path)
+        # create the augmented path
+        aug_path = instance_path.replace("\\", "/")
+        aug_path = aug_path.split("/")
+        aug_path[2] += "_aug"
+        aug_path = "/".join(aug_path)
 
         res = dict()
         data = torch.load(instance_path)
+        aug_data = torch.load(aug_path)
         res['feature'] = np.log(np.abs(data['feature']) + 1e-6)
         res['chord'] = data['chord']
+        res['aug_feature'] = np.log(np.abs(aug_data['feature']) + 1e-6)
         return res
 
     def get_paths(self, kfold=4):
         temp = {}
         used_song_names = list()
+
+        # # add augmented features to dataset
+        # aug_names = list(self.dataset_names*2)
+        # for x in range(0, len(self.dataset_names)):
+        #     aug_names[x]=aug_names[x]+"_aug"
+
         for name in self.dataset_names:
 
             # Open folder of generated features
@@ -225,6 +236,7 @@ def _collate_fn(batch):
     for i in range(batch_size):
         sample = batch[i]
         feature = sample['feature']
+        aug_feature = sample['aug_feature']
         chord = sample['chord']
         diff = np.diff(chord, axis=0).astype(np.bool)
         idx = np.insert(diff, 0, True, axis=0)
@@ -241,7 +253,7 @@ def _collate_fn(batch):
     collapsed_chords = torch.tensor(collapsed_chords, dtype=torch.int64)  # total_unique_chord_len
     boundaries = torch.tensor(boundaries, dtype=torch.uint8)  # (batch_size*time_length)
 
-    return features, input_percentages, chords, collapsed_chords, chord_lens, boundaries
+    return features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries
 
 class AudioDataLoader(DataLoader):
     def __init__(self, *args, **kwargs):

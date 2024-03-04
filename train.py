@@ -114,7 +114,7 @@ if __name__ == '__main__':
         square_mean = 0
         k = 0
         for data in train_dataloader:
-            features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
+            features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
             features = features.to(device)
             mean += torch.mean(features).item()
             square_mean += torch.mean(features.pow(2)).item()
@@ -140,7 +140,9 @@ if __name__ == '__main__':
         correct = 0.
         second_correct = 0.
         for i, data in enumerate(train_dataloader):
-            features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
+            print(type(data))
+            breakpoint()
+            features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
             features, chords = features.to(device), chords.to(device)
 
             features.requires_grad = True
