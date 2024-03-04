@@ -1,6 +1,7 @@
 from utils.transformer_modules import *
 from utils.transformer_modules import _gen_timing_signal, _gen_bias_mask
 from utils.hparams import HParams
+from pytorch_metric_learning.losses import NTXentLoss
 
 use_cuda = torch.cuda.is_available()
 
@@ -157,25 +158,26 @@ class BTC_model(nn.Module):
 
         self.self_attn_layers = bi_directional_self_attention_layers(*params)
         self.output_layer = SoftmaxOutputLayer(hidden_size=config['hidden_size'], output_size=config['num_chords'], probs_out=config['probs_out'])
+        self.contrastive_loss = NTXentLoss(temperature=0.10)
 
-    def forward(self, x, labels):
+    def forward(self, x, x_aug, labels):
         labels = labels.view(-1, self.timestep)
         # Output of Bi-directional Self-attention Layers
         self_attn_output, weights_list = self.self_attn_layers(x)
+        aug_self_attn_output, aug_weights_list = self.self_attn_layers(x_aug.to(torch.float))
 
         # return logit values for CRF
         if self.probs_out is True:
             logits = self.output_layer(self_attn_output)
             return logits
 
-        # Output layer and Soft-max
-        prediction,second = self.output_layer(self_attn_output)
-        prediction = prediction.view(-1)
-        second = second.view(-1)
-
         # Loss Calculation
-        loss = self.output_layer.loss(self_attn_output, labels)
-        return prediction, loss, weights_list, second
+        embeddings = torch.cat((aug_self_attn_output, self_attn_output), dim = 1).squeeze(0)
+        labels = torch.cat((labels, labels), dim = 1).squeeze(0)
+        print(embeddings.size())
+        print(labels.size())
+        loss = self.contrastive_loss(embeddings, labels)
+        return loss, weights_list, aug_weights_list
 
 if __name__ == "__main__":
     config = HParams.load("run_config.yaml")

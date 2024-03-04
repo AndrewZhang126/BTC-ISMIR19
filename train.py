@@ -130,6 +130,7 @@ if __name__ == '__main__':
 
     current_step = 0
     best_acc = 0
+    best_loss = 999
     before_acc = 0
     early_stop_idx = 0
     for epoch in range(restore_epoch, config.experiment['max_epoch']):
@@ -143,20 +144,24 @@ if __name__ == '__main__':
             print(type(data))
             # breakpoint()
             features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
-            features, chords = features.to(device), chords.to(device)
+            aug_features = torch.from_numpy(aug_features)
+            features, aug_features, chords = features.to(device), aug_features.to(device), chords.to(device)
 
             features.requires_grad = True
             features = (features - mean) / std
+            aug_features.requires_grad = True
+            aug_features = (aug_features - mean) / std
 
             # forward
             features = features.squeeze(1).permute(0,2,1)
+            aug_features = aug_features.unsqueeze(0).permute(0,2,1)
             optimizer.zero_grad()
-            prediction, total_loss, weights, second = model(features, chords)
+            total_loss, weights, aug_weights = model(features, aug_features, chords)
 
             # save accuracy and loss
-            total += chords.size(0)
-            correct += (prediction == chords).type_as(chords).sum()
-            second_correct += (second == chords).type_as(chords).sum()
+            #total += chords.size(0)
+            #correct += (prediction == chords).type_as(chords).sum()
+            #second_correct += (second == chords).type_as(chords).sum()
             train_loss_list.append(total_loss.item())
 
             # optimize step
@@ -166,11 +171,12 @@ if __name__ == '__main__':
             current_step += 1
 
         # logging loss and accuracy using tensorboard
-        result = {'loss/tr': np.mean(train_loss_list), 'acc/tr': correct.item() / total, 'top2/tr': (correct.item()+second_correct.item()) / total}
+        #result = {'loss/tr': np.mean(train_loss_list), 'acc/tr': correct.item() / total, 'top2/tr': (correct.item()+second_correct.item()) / total}
+        result = {'loss/tr': np.mean(train_loss_list), 'acc/tr': -1, 'top2/tr': -1}
         # for tag, value in result.items(): tf_logger.scalar_summary(tag, value, epoch+1)
         logger.info("training loss for %d epoch: %.4f" % (epoch + 1, np.mean(train_loss_list)))
-        logger.info("training accuracy for %d epoch: %.4f" % (epoch + 1, (correct.item() / total)))
-        logger.info("training top2 accuracy for %d epoch: %.4f" % (epoch + 1, ((correct.item() + second_correct.item()) / total)))
+        logger.info("training accuracy for %d epoch: %.4f" % (epoch + 1, -1))#(correct.item() / total)))
+        logger.info("training top2 accuracy for %d epoch: %.4f" % (epoch + 1, -1))#((correct.item() + second_correct.item()) / total)))
 
         # Validation
         with torch.no_grad():
@@ -182,34 +188,38 @@ if __name__ == '__main__':
             n = 0
             for i, data in enumerate(valid_dataloader):
                 val_features, val_aug_features, val_input_percentages, val_chords, val_collapsed_chords, val_chord_lens, val_boundaries = data
-                val_features, val_chords = val_features.to(device), val_chords.to(device)
+                val_aug_features = torch.from_numpy(val_aug_features)
+                val_features, val_aug_features, val_chords = val_features.to(device), val_aug_features.to(device), val_chords.to(device)
 
                 val_features = (val_features - mean) / std
+                val_aug_features = (val_aug_features - mean) / std
 
                 val_features = val_features.squeeze(1).permute(0, 2, 1)
-                val_prediction, val_loss, weights, val_second = model(val_features, val_chords)
+                val_aug_features = val_aug_features.unsqueeze(0).permute(0,2,1)
+                val_loss, weights, aug_weights = model(val_features, val_aug_features, val_chords)
 
                 val_total += val_chords.size(0)
-                val_correct += (val_prediction == val_chords).type_as(val_chords).sum()
-                val_second_correct += (val_second == val_chords).type_as(val_chords).sum()
+                #val_correct += (val_prediction == val_chords).type_as(val_chords).sum()
+                #val_second_correct += (val_second == val_chords).type_as(val_chords).sum()
                 validation_loss += val_loss.item()
 
                 n += 1
 
             # logging loss and accuracy using tensorboard
             validation_loss /= n
-            result = {'loss/val': validation_loss, 'acc/val': val_correct.item() / val_total, 'top2/val': (val_correct.item()+val_second_correct.item()) / val_total}
+            #result = {'loss/val': validation_loss, 'acc/val': val_correct.item() / val_total, 'top2/val': (val_correct.item()+val_second_correct.item()) / val_total}
+            result = {'loss/val': validation_loss, 'acc/val': -1, 'top2/val': -1}
             # for tag, value in result.items(): tf_logger.scalar_summary(tag, value, epoch + 1)
             logger.info("validation loss(%d): %.4f" % (epoch + 1, validation_loss))
-            logger.info("validation accuracy(%d): %.4f" % (epoch + 1, (val_correct.item() / val_total)))
-            logger.info("validation top2 accuracy(%d): %.4f" % (epoch + 1, ((val_correct.item() + val_second_correct.item()) / val_total)))
+            logger.info("validation accuracy(%d): %.4f" % (epoch + 1, -1))#(val_correct.item() / val_total)))
+            logger.info("validation top2 accuracy(%d): %.4f" % (epoch + 1, -1))#((val_correct.item() + val_second_correct.item()) / val_total)))
 
-            current_acc = val_correct.item() / val_total
+            #current_acc = val_correct.item() / val_total
 
-            if best_acc < val_correct.item() / val_total:
+            if best_loss > validation_loss:
                 early_stop_idx = 0
-                best_acc = val_correct.item() / val_total
-                logger.info('==== best accuracy is %.4f and epoch is %d' % (best_acc, epoch + 1))
+                best_acc = validation_loss
+                logger.info('==== best loss is %.4f and epoch is %d' % (validation_loss, epoch + 1))
                 logger.info('saving model, Epoch %d, step %d' % (epoch + 1, current_step + 1))
                 model_save_path = os.path.join(asset_path, 'model', ckpt_file_name % (epoch + 1))
                 state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
@@ -230,9 +240,10 @@ if __name__ == '__main__':
             logger.info('==== early stopped and epoch is %d' % (epoch + 1))
             break
         # learning rate decay
-        if before_acc > current_acc:
+        if validation_loss > before_loss:
             adjusting_learning_rate(optimizer=optimizer, factor=0.95, min_lr=5e-6)
-        before_acc = current_acc
+        #before_acc = current_acc
+        before_loss = validation_loss
 
     # Load model
     if os.path.isfile(os.path.join(asset_path, ckpt_path, ckpt_file_name % last_best_epoch)):
