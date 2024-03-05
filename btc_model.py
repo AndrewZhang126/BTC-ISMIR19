@@ -172,13 +172,12 @@ class BTC_model(nn.Module):
             logits = self.output_layer(self_attn_output)
             return logits
 
-        print("OUTSHAPES >>")
 
         features_list = torch.cat((self_attn_output, aug_self_attn_output), dim=0)
 
-        labels = [0]*self_attn_output.shape[0]+[1]*self_attn_output.shape[0] 
-        print(features_list.shape)
-        print(labels)
+        features_list = torch.reshape(features_list, (features_list.shape[0], self_attn_output.shape[1]*self_attn_output.shape[2]))
+
+        labels = torch.from_numpy(np.tile(np.arange(self_attn_output.shape[0]), 2))
 
 
         # Loss Calculation
