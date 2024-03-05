@@ -7,7 +7,7 @@ feature:
   n_bins: 144
   bins_per_octave: 24
   hop_length: 2048
-  large_voca: False
+  large_voca: True
 #  large_voca: True
 
 experiment:
