@@ -1,5 +1,6 @@
 import os
-from torch import optim
+import torch
+from torch import optim, save
 from utils import logger
 from audio_dataset import AudioDataset, AudioDataLoader
 from utils.tf_logger import TF_Logger
@@ -10,6 +11,7 @@ import argparse
 from utils.pytorch_utils import adjusting_learning_rate
 from utils.mir_eval_modules import root_majmin_score_calculation, large_voca_score_calculation
 import warnings
+from tqdm import tqdm
 import pdb
 
 if __name__ == '__main__':
@@ -114,7 +116,7 @@ if __name__ == '__main__':
         mean = 0
         square_mean = 0
         k = 0
-        for data in train_dataloader:
+        for data in tqdm(train_dataloader):
             features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
             features = features.to(device)
             mean += torch.mean(features).item()
@@ -126,7 +128,7 @@ if __name__ == '__main__':
         normalization = dict()
         normalization['mean'] = mean
         normalization['std'] = std
-        # torch.save(normalization, z_path)
+        torch.save(normalization, z_path)
         logger.info("Global mean and std (training set, k fold index %d) calculation complete" % args.kfold)
 
     current_step = 0
@@ -142,9 +144,7 @@ if __name__ == '__main__':
         total = 0.
         correct = 0.
         second_correct = 0.
-        for i, data in enumerate(train_dataloader):
-            print(type(data))
-            # breakpoint()
+        for i, data in enumerate(tqdm(train_dataloader)):
             features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
             features, aug_features, chords = features.to(device), aug_features.to(device), chords.to(device)
 
@@ -189,14 +189,13 @@ if __name__ == '__main__':
             n = 0
             for i, data in enumerate(valid_dataloader):
                 val_features, val_aug_features, val_input_percentages, val_chords, val_collapsed_chords, val_chord_lens, val_boundaries = data
-                val_aug_features = torch.from_numpy(val_aug_features)
                 val_features, val_aug_features, val_chords = val_features.to(device), val_aug_features.to(device), val_chords.to(device)
 
                 val_features = (val_features - mean) / std
                 val_aug_features = (val_aug_features - mean) / std
 
                 val_features = val_features.squeeze(1).permute(0, 2, 1)
-                val_aug_features = val_aug_features.unsqueeze(0).permute(0,2,1)
+                val_aug_features = val_aug_features.squeeze(1).permute(0,2,1)
                 val_loss, weights, aug_weights = model(val_features, val_aug_features, val_chords)
 
                 val_total += val_chords.size(0)
@@ -224,7 +223,8 @@ if __name__ == '__main__':
                 logger.info('saving model, Epoch %d, step %d' % (epoch + 1, current_step + 1))
                 model_save_path = os.path.join(asset_path, 'model', ckpt_file_name % (epoch + 1))
                 state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
-                # torch.save(state_dict, model_save_path)
+                torch.save(state_dict, model_save_path)
+                print("Saved to", model_save_path)
                 last_best_epoch = epoch + 1
 
             # save model
@@ -277,3 +277,4 @@ if __name__ == '__main__':
             logger.info('==== %s score 2 is %.4f' % (m, average_score_dict2[m]))
             logger.info('==== %s score 3 is %.4f' % (m, average_score_dict3[m]))
             logger.info('==== %s mix average score is %.4f' % (m, average_score))
+            
