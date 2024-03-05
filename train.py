@@ -135,6 +135,7 @@ if __name__ == '__main__':
     best_acc = 0
     best_loss = 999
     before_acc = 0
+    before_loss = 999
     early_stop_idx = 0
     for epoch in range(restore_epoch, config.experiment['max_epoch']):
         # Training
