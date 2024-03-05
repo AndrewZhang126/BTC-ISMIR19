@@ -232,6 +232,7 @@ def _collate_fn(batch):
     chords = []
     collapsed_chords = []
     features = []
+    aug_features = []
     boundaries = []
     for i in range(batch_size):
         sample = batch[i]
@@ -243,17 +244,19 @@ def _collate_fn(batch):
         chord_lens[i] = np.sum(idx).item(0)
         chords.extend(chord)
         features.append(feature)
+        aug_features.append(aug_feature)
         input_percentages[i] = feature.shape[1] / max_len
         collapsed_chords.extend(np.array(chord)[idx].tolist())
         boundary = np.append([0], diff)
         boundaries.extend(boundary.tolist())
 
     features = torch.tensor(features, dtype=torch.float32).unsqueeze(1)  # batch_size*1*feature_size*max_len
+    aug_features = torch.tensor(aug_features, dtype=torch.float32).unsqueeze(1)  # batch_size*1*feature_size*max_len
     chords = torch.tensor(chords, dtype=torch.int64)  # (batch_size*time_length)
     collapsed_chords = torch.tensor(collapsed_chords, dtype=torch.int64)  # total_unique_chord_len
     boundaries = torch.tensor(boundaries, dtype=torch.uint8)  # (batch_size*time_length)
 
-    return features, aug_feature, input_percentages, chords, collapsed_chords, chord_lens, boundaries
+    return features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries
 
 class AudioDataLoader(DataLoader):
     def __init__(self, *args, **kwargs):

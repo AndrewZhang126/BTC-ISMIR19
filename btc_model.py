@@ -1,7 +1,7 @@
 from utils.transformer_modules import *
 from utils.transformer_modules import _gen_timing_signal, _gen_bias_mask
 from utils.hparams import HParams
-from pytorch_metric_learning.losses import NTXentLoss
+from pytorch_metric_learning.losses import NTXentLoss, SelfSupervisedLoss
 
 use_cuda = torch.cuda.is_available()
 
@@ -162,6 +162,7 @@ class BTC_model(nn.Module):
 
     def forward(self, x, x_aug, labels):
         labels = labels.view(-1, self.timestep)
+
         # Output of Bi-directional Self-attention Layers
         self_attn_output, weights_list = self.self_attn_layers(x)
         aug_self_attn_output, aug_weights_list = self.self_attn_layers(x_aug.to(torch.float))
@@ -171,12 +172,17 @@ class BTC_model(nn.Module):
             logits = self.output_layer(self_attn_output)
             return logits
 
+        print("OUTSHAPES >>")
+
+        features_list = torch.cat((self_attn_output, aug_self_attn_output), dim=0)
+
+        labels = [0]*self_attn_output.shape[0]+[1]*self_attn_output.shape[0] 
+        print(features_list.shape)
+        print(labels)
+
+
         # Loss Calculation
-        embeddings = torch.cat((aug_self_attn_output, self_attn_output), dim = 1).squeeze(0)
-        labels = torch.cat((labels, labels), dim = 1).squeeze(0)
-        print(embeddings.size())
-        print(labels.size())
-        loss = self.contrastive_loss(embeddings, labels)
+        loss = self.contrastive_loss(features_list, labels)
         return loss, weights_list, aug_weights_list
 
 if __name__ == "__main__":

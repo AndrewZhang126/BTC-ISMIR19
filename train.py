@@ -17,7 +17,8 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore", category=FutureWarning)
     logger.logging_verbosity(1)
     use_cuda = torch.cuda.is_available()
-    device = torch.device("cuda" if use_cuda else "cpu")
+    # device = torch.device("cuda" if use_cuda else "cpu")
+    device = torch.device("cpu")
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--index', type=int, help='Experiment Number', default='e')
@@ -135,6 +136,7 @@ if __name__ == '__main__':
     early_stop_idx = 0
     for epoch in range(restore_epoch, config.experiment['max_epoch']):
         # Training
+        print("training")
         model.train()
         train_loss_list = []
         total = 0.
@@ -144,7 +146,6 @@ if __name__ == '__main__':
             print(type(data))
             # breakpoint()
             features, aug_features, input_percentages, chords, collapsed_chords, chord_lens, boundaries = data
-            aug_features = torch.from_numpy(aug_features)
             features, aug_features, chords = features.to(device), aug_features.to(device), chords.to(device)
 
             features.requires_grad = True
@@ -154,7 +155,7 @@ if __name__ == '__main__':
 
             # forward
             features = features.squeeze(1).permute(0,2,1)
-            aug_features = aug_features.unsqueeze(0).permute(0,2,1)
+            aug_features = aug_features.squeeze(1).permute(0,2,1)
             optimizer.zero_grad()
             total_loss, weights, aug_weights = model(features, aug_features, chords)
 
