@@ -64,7 +64,8 @@ if __name__ == '__main__':
     # valid_dataset2 = AudioDataset(config, root_dir=config.path['root_path'], dataset_names=(args.dataset2,), preprocessing=False, train=False, kfold=args.kfold)
     # valid_dataset3 = AudioDataset(config, root_dir=config.path['root_path'], dataset_names=(args.dataset3,), preprocessing=False, train=False, kfold=args.kfold)
     # valid_dataset = valid_dataset1.__add__(valid_dataset2).__add__(valid_dataset3)
-    valid_dataset = valid_dataset1
+    # valid_dataset = valid_dataset1
+    valid_dataset = train_dataset
     train_dataloader = AudioDataLoader(dataset=train_dataset, batch_size=config.experiment['batch_size'], drop_last=False, shuffle=True)
     valid_dataloader = AudioDataLoader(dataset=valid_dataset, batch_size=config.experiment['batch_size'], drop_last=False)
 
@@ -134,8 +135,10 @@ if __name__ == '__main__':
     current_step = 0
     best_acc = 0
     best_loss = 999
-    before_acc = 0
+    before_loss = 999
     early_stop_idx = 0
+    loss_graph = []
+
     for epoch in range(restore_epoch, config.experiment['max_epoch']):
         # Training
         print("training")
@@ -174,10 +177,12 @@ if __name__ == '__main__':
         # logging loss and accuracy using tensorboard
         #result = {'loss/tr': np.mean(train_loss_list), 'acc/tr': correct.item() / total, 'top2/tr': (correct.item()+second_correct.item()) / total}
         result = {'loss/tr': np.mean(train_loss_list), 'acc/tr': -1, 'top2/tr': -1}
+        loss_graph.append(np.mean(train_loss_list))
         # for tag, value in result.items(): tf_logger.scalar_summary(tag, value, epoch+1)
         logger.info("training loss for %d epoch: %.4f" % (epoch + 1, np.mean(train_loss_list)))
         logger.info("training accuracy for %d epoch: %.4f" % (epoch + 1, -1))#(correct.item() / total)))
         logger.info("training top2 accuracy for %d epoch: %.4f" % (epoch + 1, -1))#((correct.item() + second_correct.item()) / total)))
+        np.save("loss.npy", np.array(loss_graph))
 
         # Validation
         with torch.no_grad():
@@ -277,4 +282,3 @@ if __name__ == '__main__':
             logger.info('==== %s score 2 is %.4f' % (m, average_score_dict2[m]))
             logger.info('==== %s score 3 is %.4f' % (m, average_score_dict3[m]))
             logger.info('==== %s mix average score is %.4f' % (m, average_score))
-            

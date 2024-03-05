@@ -8,6 +8,7 @@ import torch
 import math
 import pdb
 import random
+from tqdm import tqdm
 from pysndfx import AudioEffectsChain
 
 class FeatureTypes(Enum):
@@ -30,6 +31,12 @@ class Preprocess():
         self.beatles_directory = self.root_path + 'Beatles/'
         self.beatles_audio_path = 'Audio/'
         self.beatles_lab_path = 'Labels/'
+
+        
+        # beatles
+        self.queen_directory = self.root_path + 'Queen/'
+        self.queen_audio_path = 'Audio/'
+        self.queen_lab_path = 'Labels/'
 
         # uspop
         self.uspop_directory = self.root_path + 'uspop/'
@@ -81,7 +88,15 @@ class Preprocess():
                             mp3_path = self.find_mp3_path(dirpath, song_name)
                             res_list.append([song_name, os.path.join(dirpath, filename), os.path.join(dirpath, mp3_path),
                                              os.path.join(self.root_path, "result", "isophonic")])
-
+      
+        # unlabeled
+        if "unlabeled" in self.dataset_names:
+            unlabeled_path = self.root_path + 'USPOP_Unlabeled/'
+            for filename in os.listdir(unlabeled_path)[:4]:
+                if filename[-3:] == "mp3":
+                    song_name = filename.replace(".mp3", "")
+                    res_list.append([song_name, os.path.join(unlabeled_path, filename.replace(".mp3", ".lab")), os.path.join(unlabeled_path, filename), os.path.join(self.root_path, "result", "Unlabeled")])
+        
         # Beatles
         if "Beatles" in self.dataset_names:
             for filename in os.listdir(os.path.join(self.beatles_directory, self.beatles_lab_path)):
@@ -93,6 +108,17 @@ class Preprocess():
                                              os.path.join(self.beatles_directory, self.beatles_audio_path, mp3_path),
                                              os.path.join(self.root_path, "result", "Beatles")])
 
+        
+        # Queen
+        if "Queen" in self.dataset_names:
+            for filename in os.listdir(os.path.join(self.queen_directory, self.beatles_lab_path)):
+                if ".lab" in filename:
+                        tmp = filename.replace(".lab", "")
+                        song_name = " ".join(re.findall("[a-zA-Z]+", tmp)).replace("CD", "")
+                        mp3_path = self.find_mp3_path(os.path.join(self.queen_directory, self.beatles_audio_path), song_name)
+                        res_list.append([song_name, os.path.join(self.queen_directory, self.beatles_lab_path, filename),
+                                             os.path.join(self.queen_directory, self.beatles_audio_path, mp3_path),
+                                             os.path.join(self.root_path, "result", "Queen")])
 
 
         # uspop
@@ -424,19 +450,46 @@ class Preprocess():
                 print(i, ' th song')
 
             original_wav, sr = librosa.load(os.path.join(mp3_path), sr=mp3_config['song_hz'])
+            # augmented_wav = original_wav
+            augmented_wav = self.augment_audio(os.path.join(mp3_path))
 
-            # save_path, mp3_string, feature_string, song_name, aug.pt
-            result_path = os.path.join(save_path, mp3_str, feature_str, song_name.strip())
-            if not os.path.exists(result_path):
-                os.makedirs(result_path)
+            i_, j_, k_, total_ = self.generate_song_label_features_voca(song_name, lab_path, mp3_path, save_path, original_wav, sr)
+            
+            # Generate augmented song features
+            self.generate_song_label_features_voca(song_name, lab_path, mp3_path, save_path+"_aug", augmented_wav, sr)
+            
+            i+=i_
+            j+=j_
+            k+=k_
+            total+=total_
 
-            # calculate result
-            for stretch_factor in stretch_factors:
+        print(pid, "total instances: %d" % total)
+
+
+    def generate_song_label_features_voca(self, song_name, lab_path, mp3_path, save_path, wav, sr):
+        stretch_factors = [1.0]
+        shift_factors = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6]
+        
+        i = 0  # number of songs
+        j = 0  # number of impossible songs
+        k = 0  # number of tried songs
+        total = 0  # number of generated instances
+
+        mp3_config, feature_config, mp3_str, feature_str = self.config_to_folder()
+        # save_path, mp3_string, feature_string, song_name, aug.pt
+        result_path = os.path.join(save_path, mp3_str, feature_str, song_name.strip())
+        if not os.path.exists(result_path):
+            os.makedirs(result_path)
+
+        loop_broken = False
+
+        # calculate result
+        for stretch_factor in tqdm(stretch_factors):
                 if loop_broken:
                     loop_broken = False
                     break
 
-                for shift_factor in shift_factors:
+                for shift_factor in tqdm(shift_factors):
                     # for filename
                     idx = 0
 
@@ -451,7 +504,7 @@ class Preprocess():
 
                     k += 1
                     # stretch original sound and chord info
-                    x = pyrb.time_stretch(original_wav, sr, stretch_factor)
+                    x = pyrb.time_stretch(wav, sr, stretch_factor)
                     x = pyrb.pitch_shift(x, sr, shift_factor)
                     audio_length = x.shape[0]
                     chord_info['start'] = chord_info['start'] * 1/stretch_factor
@@ -495,7 +548,7 @@ class Preprocess():
                                     available_chords['min_end'] = min_ends
                                     chords_lengths = available_chords['min_end'] - available_chords['max_start']
                                     available_chords['chord_length'] = chords_lengths
-                                    chord = available_chords.ix[available_chords['chord_length'].idxmax()]['chord_id']
+                                    chord = available_chords.loc[available_chords['chord_length'].idxmax()]['chord_id']
                                 else:
                                     chord = 169
                             except Exception as e:
@@ -560,4 +613,5 @@ class Preprocess():
                         else:
                             print("invalid number of chord datapoints in sequence :", len(chord_list))
                         current_start_second += mp3_config['skip_interval']
-        print(pid, "total instances: %d" % total)
+                        
+        return i,j,k,total

@@ -49,7 +49,6 @@ class AudioDataset(Dataset):
                     p.close()
                 else:
                     self.preprocessor.generate_labels_features_voca(midi_paths)
-
             # kfold is 5 fold index ( 0, 1, 2, 3, 4 )
             self.song_names, self.paths = self.get_paths_voca(kfold=kfold)
         else:
