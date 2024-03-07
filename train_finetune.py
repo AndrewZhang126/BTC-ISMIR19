@@ -7,7 +7,7 @@ from btc_model_finetune import *
 from baseline_models import CNN, CRNN
 from utils.hparams import HParams
 import argparse
-from utils.pytorch_utils import adjusting_learning_rate
+from utils.pytorch_utils import adjusting_learning_rate, reset_learning_rate
 from utils.mir_eval_modules import root_majmin_score_calculation, large_voca_score_calculation
 import warnings
 import pdb
@@ -90,6 +90,7 @@ if __name__ == '__main__':
         checkpoint = torch.load(os.path.join(asset_path, ckpt_path, ckpt_file_name % restore_epoch))
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
+        reset_learning_rate(optimizer=optimizer, lr=0.0001, wd=config.experiment['weight_decay'])
         epoch = checkpoint['epoch']
         logger.info("restore model with %d epochs" % restore_epoch)
         print("WE GOOD")
@@ -106,12 +107,17 @@ if __name__ == '__main__':
     mp3_string = "%d_%.1f_%.1f" % (mp3_config['song_hz'], mp3_config['inst_len'], mp3_config['skip_interval'])
     feature_string = "_%s_%d_%d_%d_" % ('cqt', feature_config['n_bins'], feature_config['bins_per_octave'], feature_config['hop_length'])
     z_path = os.path.join(config.path['root_path'], 'result', mp3_string + feature_string + 'mix_kfold_'+ str(args.kfold) +'_normalization.pt')
+    print(z_path)
     if os.path.exists(z_path):
+        print("found")
         normalization = torch.load(z_path)
         mean = normalization['mean']
+        print(mean)
         std = normalization['std']
+        print(std)
         logger.info("Global mean and std (k fold index %d) load complete" % args.kfold)
     else:
+        print("not found")
         mean = 0
         square_mean = 0
         k = 0
@@ -126,13 +132,16 @@ if __name__ == '__main__':
         std = np.sqrt(square_mean - mean * mean)
         normalization = dict()
         normalization['mean'] = mean
+        print(mean)
         normalization['std'] = std
-        # torch.save(normalization, z_path)
+        print(std)
+        torch.save(normalization, z_path)
         logger.info("Global mean and std (training set, k fold index %d) calculation complete" % args.kfold)
 
     current_step = 0
     best_acc = 0
     before_acc = 0
+    adjust_lr_count = 0
     early_stop_idx = 0
     for epoch in range(restore_epoch, config.experiment['max_epoch']):
         # Training
@@ -214,6 +223,7 @@ if __name__ == '__main__':
                 model_save_path = os.path.join(asset_path, 'model', ckpt_file_name % (epoch + 1))
                 state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
                 torch.save(state_dict, model_save_path)
+                print(model_save_path)
                 last_best_epoch = epoch + 1
 
             # save model
@@ -228,10 +238,14 @@ if __name__ == '__main__':
 
         if (args.early_stop == True) and (early_stop_idx > 9):
             logger.info('==== early stopped and epoch is %d' % (epoch + 1))
+            model_save_path = os.path.join(asset_path, 'model', ckpt_file_name % (epoch + 1))
+            state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
+            torch.save(state_dict, model_save_path)
+            print(model_save_path)
             break
         # learning rate decay
         if before_acc > current_acc:
-            adjusting_learning_rate(optimizer=optimizer, factor=0.95, min_lr=5e-6)
+            adjusting_learning_rate(optimizer=optimizer, factor=0.9, min_lr=5e-6)
         before_acc = current_acc
 
     # Load model

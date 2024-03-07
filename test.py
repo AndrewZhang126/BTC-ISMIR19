@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--voca', default=True, type=lambda x: (str(x).lower() == 'true'))
 parser.add_argument('--audio_dir', type=str, default='./test')
 parser.add_argument('--save_dir', type=str, default='./test')
+parser.add_argument('--model_name', type=str, default='NONE')
 args = parser.parse_args()
 
 config = HParams.load("run_config.yaml")
@@ -32,13 +33,22 @@ else:
     idx_to_chord = idx2chord
     logger.info("label type: Major and minor")
 
+if args.model_name != 'NONE':
+    model_file = args.model_name
+    print(model_file)
+
+print(model_file)
 model = BTC_model(config=config.model).to(device)
 
 # Load model
 if os.path.isfile(model_file):
     checkpoint = torch.load(model_file, map_location=torch.device('cpu'))
-    mean = checkpoint['mean']
-    std = checkpoint['std']
+    if args.model_name == 'NONE':
+        mean = checkpoint['mean']#-2.2227418449791996
+        std = checkpoint['std']#1.6895610095635125
+    else:
+        mean = -2.510647570292155
+        std = 1.8691340096742826
     model.load_state_dict(checkpoint['model'])
     logger.info("restore model")
 

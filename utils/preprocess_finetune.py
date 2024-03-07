@@ -30,15 +30,14 @@ class Preprocess():
         self.beatles_lab_path = 'Labels/'
 
         # uspop
-        self.uspop_directory = self.root_path + 'uspop/'
-        self.uspop_audio_path = 'audio/'
-        self.uspop_lab_path = 'annotations/uspopLabels/'
-        self.uspop_index_path = 'annotations/uspopLabels.txt'
+        self.uspop_directory = self.root_path + 'USpop/'
+        self.uspop_audio_path = 'Audio/'
+        self.uspop_lab_path = 'Labels/'
 
-        # robbie williams
-        self.robbie_williams_directory = self.root_path + 'robbiewilliams/'
-        self.robbie_williams_audio_path = 'audio/'
-        self.robbie_williams_lab_path = 'chords/'
+        # Queen
+        self.queen_directory = self.root_path + 'Queen/'
+        self.queen_audio_path = 'Audio/'
+        self.queen_lab_path = 'Labels/'
 
         self.feature_name = feature_to_use
         self.is_cut_last_chord = False
@@ -54,7 +53,7 @@ class Preprocess():
                 if word.lower().replace(" ", "") in filename_lower.replace(" ", ""):
                     return filename
 
-    def find_mp3_path_robbiewilliams(self, dirpath, word):
+    def find_mp3_path_queen(self, dirpath, word):
         for filename in os.listdir(dirpath):
             if ".mp3" in filename:
                 tmp = filename.replace(".mp3", "")
@@ -95,7 +94,15 @@ class Preprocess():
 
         # uspop
         if "uspop" in self.dataset_names:
-            with open(os.path.join(self.uspop_directory, self.uspop_index_path)) as f:
+            for filename in os.listdir(os.path.join(self.uspop_directory, self.uspop_lab_path)):
+                if ".lab" in filename:
+                        tmp = filename.replace(".lab", "")
+                        song_name = " ".join(re.findall("[a-zA-Z]+", tmp)).replace("CD", "")
+                        mp3_path = self.find_mp3_path(os.path.join(self.uspop_directory, self.uspop_audio_path), song_name)
+                        res_list.append([song_name, os.path.join(self.uspop_directory, self.uspop_lab_path, filename),
+                                             os.path.join(self.uspop_directory, self.uspop_audio_path, mp3_path),
+                                             os.path.join(self.root_path, "result", "USpop")])
+            """ with open(os.path.join(self.uspop_directory, self.uspop_index_path)) as f:
                 uspop_lab_list = f.readlines()
             uspop_lab_list = [x.strip() for x in uspop_lab_list]
 
@@ -116,20 +123,28 @@ class Preprocess():
                             res_list.append([mp3_artist + mp3_title, lab_path,
                                              os.path.join(self.uspop_directory, self.uspop_audio_path, filename),
                                              os.path.join(self.root_path, "result", "uspop")])
-                            break
+                            break """
 
-        # robbie williams
-        if "robbiewilliams" in self.dataset_names:
-            for dirpath, dirnames, filenames in os.walk(self.robbie_williams_directory):
+        # Queen
+        if "queen" in self.dataset_names:
+            for filename in os.listdir(os.path.join(self.queen_directory, self.beatles_lab_path)):
+                if ".lab" in filename:
+                        tmp = filename.replace(".lab", "")
+                        song_name = " ".join(re.findall("[a-zA-Z]+", tmp)).replace("CD", "")
+                        mp3_path = self.find_mp3_path(os.path.join(self.queen_directory, self.queen_audio_path), song_name)
+                        res_list.append([song_name, os.path.join(self.queen_directory, self.queen_lab_path, filename),
+                                             os.path.join(self.queen_directory, self.queen_audio_path, mp3_path),
+                                             os.path.join(self.root_path, "result", "Queen")])
+            """ for dirpath, dirnames, filenames in os.walk(self.queen_directory):
                 if not dirnames:
                     for filename in filenames:
                         if ".txt" in filename and (not 'README' in filename):
                             tmp = filename.replace(".txt", "")
                             song_name = " ".join(re.findall("[a-zA-Z]+", tmp)).replace("GTChords", "")
                             mp3_dir = dirpath.replace("chords", "audio")
-                            mp3_path = self.find_mp3_path_robbiewilliams(mp3_dir, song_name)
+                            mp3_path = self.find_mp3_path_queen(mp3_dir, song_name)
                             res_list.append([song_name, os.path.join(dirpath, filename), os.path.join(mp3_dir, mp3_path),
-                                             os.path.join(self.root_path, "result", "robbiewilliams")])
+                                             os.path.join(self.root_path, "result", "queen")]) """
         return res_list
 
     def uspop_pre(self, text):
@@ -356,6 +371,7 @@ class Preprocess():
 
             # save_path, mp3_string, feature_string, song_name, aug.pt
             result_path = os.path.join(save_path, mp3_str, feature_str, song_name.strip())
+            print("RESULT PATH:", result_path)
             if not os.path.exists(result_path):
                 os.makedirs(result_path)
 
@@ -389,7 +405,7 @@ class Preprocess():
                     last_sec = chord_info.iloc[-1]['end']
                     last_sec_hz = int(last_sec * mp3_config['song_hz'])
 
-                    if audio_length + mp3_config['skip_interval'] < last_sec_hz:
+                    if audio_length + mp3_config['skip_interval']*mp3_config['song_hz'] < last_sec_hz:
                         print('loaded song is too short :', song_name)
                         loop_broken = True
                         j += 1
@@ -424,7 +440,7 @@ class Preprocess():
                                     available_chords['min_end'] = min_ends
                                     chords_lengths = available_chords['min_end'] - available_chords['max_start']
                                     available_chords['chord_length'] = chords_lengths
-                                    chord = available_chords.ix[available_chords['chord_length'].idxmax()]['chord_id']
+                                    chord = available_chords.loc[available_chords['chord_length'].idxmax()]['chord_id']
                                 else:
                                     chord = 169
                             except Exception as e:

@@ -10,12 +10,21 @@ use_cuda = torch.cuda.is_available()
 
 # optimization
 # reference: http://pytorch.org/docs/master/_modules/torch/optim/lr_scheduler.html#ReduceLROnPlateau
-def adjusting_learning_rate(optimizer, factor=.5, min_lr=0.00001):
+def adjusting_learning_rate(optimizer, factor=.125, min_lr=0.00001):
     for i, param_group in enumerate(optimizer.param_groups):
         old_lr = float(param_group['lr'])
         new_lr = max(old_lr * factor, min_lr)
         param_group['lr'] = new_lr
         logger.info('adjusting learning rate from %.6f to %.6f' % (old_lr, new_lr))
+
+def reset_learning_rate(optimizer, lr, wd):
+    for i, param_group in enumerate(optimizer.param_groups):
+        old_lr = float(param_group['lr'])
+        new_lr = lr
+        param_group['lr'] = new_lr
+        param_group['weight_decay'] = wd
+        print(param_group['weight_decay'])
+        logger.info('reset learning rate from %.6f to %.6f' % (old_lr, new_lr))
 
 
 # model save and loading
