@@ -8,7 +8,7 @@ N = 9
 score_map = {'root': [], 'majmin': [], 'majmin_inv': [], 'thirds': [], 'triads': [], 
                  'tetrads': [], 'sevenths': [], 'sevenths_inv': [], 'mirex': []}
 
-artists = ["Beatles", "Queen", "USPop"]
+artists = ["Beatles"]
 for artist in artists:
     path = "./output_data/" + artist
     curr_vals = {'root': 0, 'majmin': 0, 'majmin_inv': 0, 'thirds': 0, 'triads': 0, 

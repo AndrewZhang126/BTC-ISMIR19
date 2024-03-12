@@ -159,6 +159,11 @@ if __name__ == '__main__':
 
             # forward
             features = features.squeeze(1).permute(0,2,1)
+            # for name, para in model.named_parameters():
+            #     if 'output_layer' in name:
+            #         para.requires_grad = True
+            #     else:
+            #         para.requires_grad = False
             optimizer.zero_grad()
             prediction, total_loss, weights, second = model(features, chords)
 

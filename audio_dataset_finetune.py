@@ -166,6 +166,9 @@ class AudioDataset(Dataset):
             print(os.getcwd())
             # dataset_path = os.path.join(os.getcwd(), self.root_dir, name)
             song_names = os.listdir(dataset_path)
+
+            if ".DS_Store" in song_names:
+                song_names.remove(".DS_Store")
             for song_name in song_names:
                 paths = []
                 instance_names = os.listdir(os.path.join(dataset_path, song_name))
@@ -178,11 +181,11 @@ class AudioDataset(Dataset):
         song_names = used_song_names
         song_names = SortedList(song_names)
 
-        print('Total used song length : %d' %len(song_names))
+        print('Total used song length voca : %d' %len(song_names))
         tmp = []
         for i in range(len(song_names)):
             tmp += temp[song_names[i]]
-        print('Total instances (train and valid) : %d' %len(tmp))
+        print('Total instances (train and valid) voca : %d' %len(tmp))
 
         # divide train/valid dataset using k fold
         result = []

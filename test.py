@@ -47,8 +47,8 @@ if os.path.isfile(model_file):
         mean = checkpoint['mean']#-2.2227418449791996
         std = checkpoint['std']#1.6895610095635125
     else:
-        mean = -2.510647570292155
-        std = 1.8691340096742826
+        mean = -2.510647570292155#-2.2227418449791996
+        std = 1.8691340096742826#1.6895610095635125
     model.load_state_dict(checkpoint['model'])
     logger.info("restore model")
 
